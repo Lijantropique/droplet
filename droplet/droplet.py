@@ -12,6 +12,7 @@ http://www.iapws.org/relguide/IF97-Rev.html
 import os
 import json
 import math
+import sympy
 
 # Reference Constants
 R = 0.461526    # [kJ kg⁻¹ K⁻¹]
@@ -19,11 +20,6 @@ Tc = 647.096    # [K]
 Pc = 22.064     # [MPa]
 rhoc = 322      # [kg m⁻³]
 folder_path = os.path.dirname(os.path.abspath(__file__)) + os.sep
-
-dispatcher = {'region1': region1, 'region2': region2,
-              'region3': region3, 'region4': region4,
-              'region5': region5, 'region2_meta': region2_meta,
-              'region23_boundary': region23_boundary}
 
 def region1(temperature,pressure):
     P_star = 16.53
@@ -68,7 +64,7 @@ def region1(temperature,pressure):
 
     # Specific Internal Energy:
     # [kJ kg⁻¹]
-    u = (gamma_tao*tao-gamma_pi*pi)*R*temperature))
+    u = (gamma_tao*tao-gamma_pi*pi)*R*temperature
 
     # Specific Entropy:
     # [kJ kg⁻¹ K⁻¹]
@@ -76,7 +72,7 @@ def region1(temperature,pressure):
 
     # Specific Enthalpy:
     # [kJ kg⁻¹]
-    h = gamma_tao*tao*R*temperature)
+    h = gamma_tao*tao*R*temperature
 
     # Specific Isobaric Heat capacity:
     # [kJ kg⁻¹ K⁻¹]
@@ -158,7 +154,7 @@ def region2(temperature, pressure):
     # Specific Volume:
     # 0.001 is a factor to report the specific volume in [m³ kg⁻¹]
     aux = gammai_pi+gammar_pi
-    v = pi*aux*R*temperature/pressure * 0.001))
+    v = pi*aux*R*temperature/pressure * 0.001
 
     # Specific Density:
     # [kg m⁻³]
@@ -203,6 +199,7 @@ def region2(temperature, pressure):
 
 def region3(temperature, pressure):
     #TODO: Accept pressure at goal seek density to calculate pressure
+    #http://stackoverflow.com/questions/10274236/python-solving-equations-for-unknown-variable
     delta = density/rhoc
     tao = Tc/temperature
 
@@ -276,7 +273,7 @@ def region3(temperature, pressure):
     aux2 = (delta*phi_delta - delta*tao*phi_delta_tao)**2
     aux3 = tao*tao*phi_tao2*(2*delta*phi_delta + delta*delta*phi_delta2)
     aux = aux1 /(aux2-aux3)
-    jtc = aux/R/density*1000))
+    jtc = aux/R/density*1000
 
     # Isothermal throttling coefficient:
     aux1 = delta*phi_delta - delta*tao*phi_delta_tao
@@ -434,7 +431,7 @@ def region5(temperature, pressure):
 
     return v, rho, u, s, h, cp, cv, w
 
-def region2_meta(temperature=, pressure=):
+def region2_meta(temperature, pressure):
     P_star = 1
     T_star = 540
     pi = pressure/P_star
@@ -566,8 +563,48 @@ def region23_boundary(temperature=-1, pressure=-1):
 
     return temperature, pressure
 
+dispatcher = {'region1': region1, 'region2': region2,
+              'region3': region3, 'region4': region4,
+              'region5': region5, 'region2_meta': region2_meta,
+              'region23_boundary': region23_boundary}
+
+#-------------------------------
 class Droplet(object):
-    pass
+    # temperature : K
+    # pressure: MPa
+    def __init__(self, temperature=273.15, pressure=1):
+        self._pressure = None
+        self._temperature = None
+
+        self.pressure = pressure
+        self.temperature = temperature
+
+    @property
+    def temperature(self):
+        return self._temperature
+
+    @temperature.setter
+    def temperature(self,value):
+        if (value<273.15 or value>2273.15):
+            raise ValueError ("Temperature outside allowed range")
+        elif (value > 1073.15 and self.pressure>50):
+            raise ValueError ("Temperature outside allowed range for specified pressure: <=1073.15 K/ 50-100 Mpa")
+        else:
+            self._temperature = value
+
+
+    @property
+    def pressure(self):
+        return self._pressure
+
+    @pressure.setter
+    def pressure(self,value):
+        if (value<0 or value>100):
+            raise ValueError ("Pressure outside allowed range")
+        self._pressure = value
+
+    def __str__(self):
+        return "Pressure: {}MPa / Temperature:{}K".format(self.pressure, self.temperature)
 
 def parseInput():
     pass
@@ -580,21 +617,8 @@ def pretty_print():
 
 def main():
     """ Run the whole program """
-    # region1()
-    # print ('\n')
-    # region1(temperature=0.623150000E3)
-    # print ('\n')
-    # region1(pressure=0.165291643E2)
-    # print ('\n')
-    # region1(temperature=473.15, pressure=40)
-    # region2(temperature=823.15, pressure=14)
-    # region3(temperature=750, density=500)
-    # region4(temperature=373.15)
-    # region4(pressure=0.101325)
-    # region5(temperature=2000, pressure=30)
-    # region2_meta(temperature=450, pressure=1.5)
-    #region23_boundary(temperature=623.15)
-    #region23_boundary(pressure=16.5291643)
+    test = Droplet(1074,60)
+    print (test)
 
 if __name__ == '__main__':
     main()
