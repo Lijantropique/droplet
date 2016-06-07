@@ -66,10 +66,10 @@ def test_boundaries_pressure():
             droplet.Droplet(*pair)
 
 def test_boundary2_3():
-    drop = droplet.Droplet(temperature=0.623150000E3)
-    assert (drop.pressure - 0.165291643E2) <= TOL
-    drop = droplet.Droplet(pressure=0.165291643E2)
-    assert (drop.temperature - 0.623150000E3) <= TOL
+    drop = droplet.dispatcher['region23_boundary'](temperature=0.623150000E3)
+    assert (drop[1] - 0.165291643E2) <= TOL
+    drop = droplet.dispatcher['region23_boundary'](pressure=0.165291643E2)
+    assert (drop[0] - 0.623150000E3) <= TOL
 
 def test_region1_1():
     drop = droplet.Droplet(temperature=300, pressure=3)
