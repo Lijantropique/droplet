@@ -310,6 +310,7 @@ def region4(temperature=-1, pressure=-1):
         # [MPa]
         pressure_sat = P_star * ((2*C / (-B + (B*B - 4*A*C)**0.5))**4)
         beta = (pressure_sat/P_star)**(1/4)
+        temperature_sat = temperature
 
     if temperature==-1:
         beta = (pressure/P_star)**(1/4)
@@ -321,6 +322,7 @@ def region4(temperature=-1, pressure=-1):
         # [K]
         temperature_sat = T_star * (data[9]['ni'] + D - (((data[9]['ni']+D)**2 - 4*(data[8]['ni']+data[9]['ni']*D))**0.5))/2
         theta = (temperature_sat/T_star) + data[8]['ni']/((temperature/T_star)-data[9]['ni'])
+        pressure_sat=pressure
 
     return temperature_sat, pressure_sat
 
@@ -578,6 +580,8 @@ class Droplet(object):
 
         self.pressure = pressure
         self.temperature = temperature
+        self.region=-1
+        self.set_region()
 
     @property
     def temperature(self):
@@ -592,7 +596,6 @@ class Droplet(object):
         else:
             self._temperature = value
 
-
     @property
     def pressure(self):
         return self._pressure
@@ -602,6 +605,22 @@ class Droplet(object):
         if (value<0 or value>100):
             raise ValueError ("Pressure outside allowed range")
         self._pressure = value
+
+    def set_region(self):
+        if (self.temperature<=623.15):
+            p_aux = dispatcher['region4'](self.temperature)[1]
+            if (self.pressure>=p_aux):
+                self.region='Region1'
+            else:
+                self.region='Region4'
+        elif (self.temperature<=1073.15):
+            p_aux = dispatcher['region23_boundary'](self.temperature)[1]
+            if (self.pressure>=p_aux):
+                self.region='Region3'
+            else:
+                self.region='Region2'
+        else:
+            self.region='Region5'
 
     def __str__(self):
         return "Pressure: {}MPa / Temperature:{}K".format(self.pressure, self.temperature)
