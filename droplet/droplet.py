@@ -198,8 +198,9 @@ def region2(temperature, pressure):
     return v, rho, u, s, h, cp, cv, w
 
 def region3(temperature, pressure):
-    #TODO: Accept pressure at goal seek density to calculate pressure
+    #TODO: Accept pressure and goal seek density to calculate pressure
     #http://stackoverflow.com/questions/10274236/python-solving-equations-for-unknown-variable
+    density = rhoc #TODO: correct this value 
     delta = density/rhoc
     tao = Tc/temperature
 
@@ -234,6 +235,9 @@ def region3(temperature, pressure):
     # Pressure Calculated:
     # 1000 is a factor to report the pressure in [MPa]
     pressure_calc = phi_delta*delta*density*R*temperature/1000
+
+    ##### Up to this point should be the goal seek to find the density/pressure
+
 
     # Specific Internal Energy:
     # [kJ kg⁻¹]
@@ -565,9 +569,9 @@ def region23_boundary(temperature=-1, pressure=-1):
 
     return temperature, pressure
 
-dispatcher = {'region1': region1, 'region2': region2,
-              'region3': region3, 'region4': region4,
-              'region5': region5, 'region2_meta': region2_meta,
+dispatcher = {'Region 1': region1, 'Region 2': region2,
+              'Region 3': region3, 'Region 4': region4,
+              'Region 5': region5, 'region2_meta': region2_meta,
               'region23_boundary': region23_boundary}
 
 #-------------------------------
@@ -582,6 +586,8 @@ class Droplet(object):
         self.temperature = temperature
         self.region=-1
         self.set_region()
+        # all the regions return v, rho, u, s, h, cp, cv, w
+        self.v, self.rho, self.u, self.s, self.h, self.cp, self.cv, self.w = self.get_properties()
 
     @property
     def temperature(self):
@@ -608,19 +614,22 @@ class Droplet(object):
 
     def set_region(self):
         if (self.temperature<=623.15):
-            p_aux = dispatcher['region4'](self.temperature)[1]
+            p_aux = dispatcher['Region 4'](self.temperature)[1]
             if (self.pressure>=p_aux):
-                self.region='Region1'
+                self.region='Region 1'
             else:
-                self.region='Region4'
+                self.region='Region 2'
         elif (self.temperature<=1073.15):
             p_aux = dispatcher['region23_boundary'](self.temperature)[1]
             if (self.pressure>=p_aux):
-                self.region='Region3'
+                self.region='Region 3'
             else:
-                self.region='Region2'
+                self.region='Region 2'
         else:
-            self.region='Region5'
+            self.region='Region 5'
+
+    def get_properties(self):
+        return dispatcher[self.region](self.temperature, self.pressure)
 
     def __str__(self):
         return "Pressure: {}MPa / Temperature:{}K".format(self.pressure, self.temperature)
