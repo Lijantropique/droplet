@@ -8,7 +8,7 @@ import pytest
 import droplet
 import numpy as np
 
-TOL=1E-6 # tolerance for calculations
+TOL=1E-5 # tolerance for calculations
 
 def test_boundaries_extreme():
     #TODO: check limits <= values or just <
@@ -73,7 +73,7 @@ def test_boundary2_3():
 
 def test_region1_1():
     drop = droplet.Droplet(temperature=300, pressure=3)
-    assert drop.region == 'Region1'
+    assert drop.region == 'Region 1'
     assert (drop.v - 0.100215168E-2) <= TOL
     assert (drop.h - 0.115331273E3) <= TOL
     assert (drop.u - 0.112324818E3) <= TOL
@@ -83,7 +83,7 @@ def test_region1_1():
 
 def test_region1_2():
     drop = droplet.Droplet(temperature=300, pressure=80)
-    assert drop.region == 'Region1'
+    assert drop.region == 'Region 1'
     assert (drop.v - 0.971180894E-3) <= TOL
     assert (drop.h - 0.184142828E3) <= TOL
     assert (drop.u - 0.106448356E3) <= TOL
@@ -93,7 +93,7 @@ def test_region1_2():
 
 def test_region1_3():
     drop = droplet.Droplet(temperature=500, pressure=3)
-    assert drop.region == 'Region1'
+    assert drop.region == 'Region 1'
     assert (drop.v - 0.120241800E-2) <= TOL
     assert (drop.h - 0.975542239E3) <= TOL
     assert (drop.u - 0.971934985E3) <= TOL
@@ -103,7 +103,7 @@ def test_region1_3():
 
 def test_region2_1():
     drop = droplet.Droplet(temperature=300, pressure=0.0035)
-    assert drop.region == 'Region2'
+    assert drop.region == 'Region 2'
     assert (drop.v - 0.394913866E2) <= TOL
     assert (drop.h - 0.254991145E4) <= TOL
     assert (drop.u - 0.241169160E4) <= TOL
@@ -113,7 +113,7 @@ def test_region2_1():
 
 def test_region2_2():
     drop = droplet.Droplet(temperature=700, pressure=0.0035)
-    assert drop.region == 'Region2'
+    assert drop.region == 'Region 2'
     assert (drop.v - 0.923015898E2) <= TOL
     assert (drop.h - 0.333568375E4) <= TOL
     assert (drop.u - 0.301262819E4) <= TOL
@@ -123,7 +123,7 @@ def test_region2_2():
 
 def test_region2_3():
     drop = droplet.Droplet(temperature=700, pressure=30)
-    assert drop.region == 'Region2'
+    assert drop.region == 'Region 2'
     assert (drop.v - 0.542946619E-2) <= TOL
     assert (drop.h - 0.263149474E4) <= TOL
     assert (drop.u - 0.246861076E4) <= TOL
@@ -165,7 +165,7 @@ def test_region2Meta_3():
 # check python for goalseek.
 def test_region3_1():
     drop = droplet.Droplet(temperature=650, pressure=0.255837018e2)
-    assert drop.region == 'Region3'
+    assert drop.region == 'Region 3'
     assert (drop.v - 1/500) <= TOL
     assert (drop.h - 0.186343019e4) <= TOL
     assert (drop.u - 0.181226279e4) <= TOL
@@ -175,7 +175,7 @@ def test_region3_1():
 
 def test_region3_2():
     drop = droplet.Droplet(temperature=650, pressure=0.222930643e2)
-    assert drop.region == 'Region3'
+    assert drop.region == 'Region 3'
     assert (drop.v - 1/200) <= TOL
     assert (drop.h - 0.237512401e4) <= TOL
     assert (drop.u - 0.226365868e4) <= TOL
@@ -185,7 +185,7 @@ def test_region3_2():
 
 def test_region3_3():
     drop = droplet.Droplet(temperature=750, pressure=0.783095639e2)
-    assert drop.region == 'Region3'
+    assert drop.region == 'Region 3'
     assert (drop.v - 1/500) <= TOL
     assert (drop.h - 0.225868845e4) <= TOL
     assert (drop.u - 0.210206932e4) <= TOL
@@ -195,29 +195,29 @@ def test_region3_3():
 
 def test_region4_1():
     drop = droplet.Droplet(temperature=300)
-    assert drop.region == 'Region4'
+    assert drop.region == 'Region 4'
     assert (drop.pressure - 0.353658941e-2) <= TOL
     drop = droplet(temperature=500)
-    assert drop.region == 'Region4'
+    assert drop.region == 'Region 4'
     assert (drop.pressure - 0.263889776e1) <= TOL
     drop = droplet(temperature=600)
-    assert drop.region == 'Region4'
+    assert drop.region == 'Region 4'
     assert (drop.pressure - 0.123443146e2) <= TOL
 
 def test_region4_2():
     drop = droplet.Droplet(pressure=0.1)
-    assert drop.region == 'Region4'
+    assert drop.region == 'Region 4'
     assert (drop.temperature - 0.372755919e3) <= TOL
     drop = droplet(pressure=1)
-    assert drop.region == 'Region4'
+    assert drop.region == 'Region 4'
     assert (drop.temperature - 0.453035632e3) <= TOL
     drop = droplet(pressure=10)
-    assert drop.region == 'Region4'
+    assert drop.region == 'Region 4'
     assert (drop.temperature - 0.584149488e3) <= TOL
 
 def test_region5_1():
     drop = droplet.Droplet(temperature=1500, pressure=0.5)
-    assert drop.region == 'Region5'
+    assert drop.region == 'Region 5'
     assert (drop.v - 0.138455090e1) <= TOL
     assert (drop.h - 0.521976855e4) <= TOL
     assert (drop.u - 0.452749310e4) <= TOL
@@ -227,7 +227,7 @@ def test_region5_1():
 
 def test_region5_2():
     drop = droplet.Droplet(temperature=1500, pressure=30.0)
-    assert drop.region == 'Region5'
+    assert drop.region == 'Region 5'
     assert (drop.v - 0.230761299e-1) <= TOL
     assert (drop.h - 0.516723514e4) <= TOL
     assert (drop.u - 0.447495124e4) <= TOL
@@ -237,7 +237,7 @@ def test_region5_2():
 
 def test_region5_3():
     drop = droplet.Droplet(temperature=2000, pressure=30.0)
-    assert drop.region == 'Region5'
+    assert drop.region == 'Region 5'
     assert (drop.v - 0.311385219e-1) <= TOL
     assert (drop.h - 0.657122604e4) <= TOL
     assert (drop.u - 0.563707038e4) <= TOL
