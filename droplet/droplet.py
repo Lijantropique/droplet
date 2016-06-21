@@ -12,13 +12,14 @@ http://www.iapws.org/relguide/IF97-Rev.html
 import os
 import json
 import math
-import sympy
+from scipy.optimize import fsolve
 
 # Reference Constants
 R = 0.461526    # [kJ kg⁻¹ K⁻¹]
 Tc = 647.096    # [K]
 Pc = 22.064     # [MPa]
 rhoc = 322      # [kg m⁻³]
+
 folder_path = os.path.dirname(os.path.abspath(__file__)) + os.sep
 
 def region1(temperature,pressure):
@@ -198,46 +199,58 @@ def region2(temperature, pressure):
     return v, rho, u, s, h, cp, cv, w
 
 def region3(temperature, pressure):
-    #TODO: Accept pressure and goal seek density to calculate pressure
-    #http://stackoverflow.com/questions/10274236/python-solving-equations-for-unknown-variable
-    density = rhoc #TODO: correct this value 
-    delta = density/rhoc
+    #TODO: Look for a better option to find density
+
+    def check_pressure(density):
+        delta = density/rhoc
+        file_name = 'region3.json'
+        with open(folder_path + 'data/'+ file_name) as data_file:
+            data = json.load(data_file)
+
+        # Helmholtz Free Energy
+        helmholtz = lambda item: item['ni']*(delta**item['Ii'])*(tao**item['Ji'])
+        phi = data[0]['ni']*math.log(delta) + sum([helmholtz(item) for item in data[1:]])
+
+        # Partial derivative with respect to delta
+        dhelmholtz_delta = lambda item: item['ni']*item['Ii']*(delta**(item['Ii']-1))*(tao**item['Ji'])
+        phi_delta = data[0]['ni']/delta + sum([dhelmholtz_delta(item) for item in data[1:]])
+
+        # Second partial derivative with respect to delta
+        dhelmholtz_delta2 = lambda item: item['ni']*item['Ii']*(item['Ii']-1)*(delta**(item['Ii']-2))*(tao**item['Ji'])
+        phi_delta2 = -data[0]['ni']/delta**2 + sum([dhelmholtz_delta2(item) for item in data[1:]])
+
+        # Partial derivative with respect to tao
+        dhelmholtz_tao = lambda item: item['ni']*(delta**item['Ii'])*item['Ji']*(tao**(item['Ji']-1))
+        phi_tao = sum([dhelmholtz_tao(item) for item in data[1:]])
+
+        # Second partial derivative with respect to tao
+        dhelmholtz_tao2 = lambda item: item['ni']*(delta**item['Ii'])*item['Ji']*(item['Ji']-1)*(tao**(item['Ji']-2))
+        phi_tao2 = sum([dhelmholtz_tao2(item) for item in data[1:]])
+
+        # Second partial derivative with respect delta and tao
+        dhelmholtz_delta_tao = lambda item: item['ni']*item['Ii']*(delta**(item['Ii']-1))*item['Ji']*(tao**(item['Ji']-1))
+        phi_delta_tao = sum([dhelmholtz_delta_tao(item) for item in data[1:]])
+
+        # Pressure Calculated:
+        # 1000 is a factor to report the pressure in [MPa]
+        pressure_calc = phi_delta*delta*density*R*temperature/1000
+
+        return pressure_calc, phi, phi_delta, phi_delta2, phi_tao, phi_tao2, phi_delta_tao
+
     tao = Tc/temperature
+    ########### Density LookUp ###########
+    cont = 0
+    density = 0.1
+    while ((abs(check_pressure(density)[0]-pressure)>=1E-3) and (cont<10000)):
+        density += 0.1
+        cont +=1
 
-    file_name = 'region3.json'
-    with open(folder_path + 'data/'+ file_name) as data_file:
-        data = json.load(data_file)
+    _, phi, phi_delta, phi_delta2, phi_tao, phi_tao2, phi_delta_tao = find_pressure(density)
+    delta = density/rhoc
+    ########### Density LookUp ###########
 
-    # Helmholtz Free Energy
-    helmholtz = lambda item: item['ni']*(delta**item['Ii'])*(tao**item['Ji'])
-    phi = data[0]['ni']*math.log(delta) + sum([helmholtz(item) for item in data[1:]])
-
-    # Partial derivative with respect to delta
-    dhelmholtz_delta = lambda item: item['ni']*item['Ii']*(delta**(item['Ii']-1))*(tao**item['Ji'])
-    phi_delta = data[0]['ni']/delta + sum([dhelmholtz_delta(item) for item in data[1:]])
-
-    # Second partial derivative with respect to delta
-    dhelmholtz_delta2 = lambda item: item['ni']*item['Ii']*(item['Ii']-1)*(delta**(item['Ii']-2))*(tao**item['Ji'])
-    phi_delta2 = -data[0]['ni']/delta**2 + sum([dhelmholtz_delta2(item) for item in data[1:]])
-
-    # Partial derivative with respect to tao
-    dhelmholtz_tao = lambda item: item['ni']*(delta**item['Ii'])*item['Ji']*(tao**(item['Ji']-1))
-    phi_tao = sum([dhelmholtz_tao(item) for item in data[1:]])
-
-    # Second partial derivative with respect to tao
-    dhelmholtz_tao2 = lambda item: item['ni']*(delta**item['Ii'])*item['Ji']*(item['Ji']-1)*(tao**(item['Ji']-2))
-    phi_tao2 = sum([dhelmholtz_tao2(item) for item in data[1:]])
-
-    # Second partial derivative with respect delta and tao
-    dhelmholtz_delta_tao = lambda item: item['ni']*item['Ii']*(delta**(item['Ii']-1))*item['Ji']*(tao**(item['Ji']-1))
-    phi_delta_tao = sum([dhelmholtz_delta_tao(item) for item in data[1:]])
-
-    # Pressure Calculated:
-    # 1000 is a factor to report the pressure in [MPa]
-    pressure_calc = phi_delta*delta*density*R*temperature/1000
-
-    ##### Up to this point should be the goal seek to find the density/pressure
-
+    # Specific Volume:
+    v = 1/density
 
     # Specific Internal Energy:
     # [kJ kg⁻¹]
@@ -293,7 +306,7 @@ def region3(temperature, pressure):
     aux = aux1 /(aux2-aux3)
     itpc= aux/R/density*1000
 
-    return v, rho, u, s, h, cp, cv, w
+    return v, density, u, s, h, cp, cv, w
 
 def region4(temperature=-1, pressure=-1):
     #TODO at this point either reg1/reg2 or reg3/reg2 shuould be used
